@@ -22,8 +22,24 @@ const mongoUri = process.env.MONGO_URI
 const jwtSecret = process.env.JWT_SECRET
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173'
 const rateLimitMap = new Map()
+const allowedOrigins = new Set([
+  clientUrl,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+].filter(Boolean))
 
-app.use(cors({ origin: clientUrl }))
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) {
+      callback(null, true)
+      return
+    }
+    callback(new Error(`Origin ${origin} is not allowed by CORS`))
+  },
+  credentials: true,
+}))
 app.use(express.json({ limit: '1mb' }))
 
 const emailRegex = /^\S+@\S+\.\S+$/
